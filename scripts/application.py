@@ -58,6 +58,8 @@ def debug(i):
     global averageSum, averageTotal, averageCount,writeContinu, substract
     x = np.linspace(0, 2, 1000)
     y = np.sin(2 * np.pi * (x - 0.01 * i))
+    current_int =y
+    current_wave = x
     if substract:
         if len(ref_int) == len(y):
             y = y-ref_int
@@ -270,7 +272,8 @@ class Window(QMainWindow, Ui_MainWindow):
         
         doAverage = self.checkAverage.isChecked()
         averageTotal = self.spinAverage.value()
-        
+        #averageTotal = averageTotal * integrationTime / 1000 #streng genommen sind integration und view update nicht
+                                                             #im sync weshalb eigentlich das noch verrechnet werden muss
         integrationTime = self.spinInt.value()
 
         writeContinu = self.checkWrite.isChecked()
