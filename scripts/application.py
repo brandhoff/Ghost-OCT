@@ -30,14 +30,18 @@ ref_wav, ref_int = [1,2,3,4,5],[1,2,3,4,5]
 current_wave, current_int = [1,2,3,4.3,5],[1,2.2783,3,4,5]
 lowerBounds = 0
 upperBounds = 1000
-substract = True
+substract = False
 doFFT = True
 doWriteAlways = False
+
+writeContinu = False
 
 integrationTime = 10000
 averageTotal = 1
 averageCount = 1
 doAverage = False
+
+averageSum = []
 
 #No unopened devices
 spec = ""#sm.from_first_available()
@@ -51,12 +55,38 @@ Hier sind debug sachen da ich kein sts spectrometer habe
 """
 
 def debug(i):
+    global averageSum, averageTotal, averageCount,writeContinu, substract
     x = np.linspace(0, 2, 1000)
     y = np.sin(2 * np.pi * (x - 0.01 * i))
+    if substract:
+        if len(ref_int) == len(y):
+            y = y-ref_int
+    
+    if doAverage:
+        if len(averageSum) != len(y):
+            averageSum = y
+            averageCount = averageCount+1
+        else:
+          averageSum = averageSum + y
+          averageCount = averageCount+1
+          
+        if averageCount == averageTotal:
+             its = averageSum/averageTotal
+             averageSum = []
+             averageCount=0
+             if writeContinu:
+                    df = pd.DataFrame()
+                    df.insert(0,"wavelength",x)
+                    df.insert(0,"intensity",y)
+                    df.to_csv("average_spectrum_"+str(datetime.now())+".speck")
+             
+
+        else:
+             return
+    
     line.set_data(x, y)
     axFFT.cla()
     if doFFT:
-        
         k = x
         w=blackman(len(k))
         transformed = ff.fft(w*y)
@@ -75,6 +105,7 @@ ani = matanimation.FuncAnimation(liveFig, debug, interval=10)
 def animate(i):
     global spec,integrationTime, current_wave, current_int,ref_wav, ref_int, substract,doFFT
     global liveFig, axSpec, axFFT
+    global averageSum, averageTotal, averageCount,writeContinu
     
     plt.cla()
     spec.integration_time_micros(integrationTime)
@@ -82,7 +113,8 @@ def animate(i):
     current_int = spec.intensities()
     
     if substract:
-        current_int = current_int - ref_int
+        if len(current_int) == len(ref_int):
+            current_int = current_int - ref_int
     
     wavelengths_cut = []
     intensity_cut = []
@@ -94,6 +126,27 @@ def animate(i):
     wav = np.asarray(wavelengths_cut)
     its = np.asarray(intensity_cut)
 
+    if doAverage:
+        if len(averageSum) != len(its):
+            averageSum = its
+            averageCount = averageCount+1
+        else:
+          averageSum = averageSum + its
+          averageCount = averageCount+1
+          
+        if averageCount == averageTotal:
+             its = averageSum/averageTotal
+             averageSum = []
+             averageCount=0
+             #Falls filewriting an ist sollen diese auch geschrieben werden
+             if writeContinu:
+                    df = pd.DataFrame()
+                    df.insert(0,"wavelength",wav)
+                    df.insert(0,"intensity",its)
+                    df.to_csv("average_spectrum_"+str(datetime.now())+".speck")
+
+        else:
+             return
     axSpec.plot(wav,its)
 
 
@@ -205,8 +258,9 @@ class Window(QMainWindow, Ui_MainWindow):
         
         
         global doFFT, doAlwaysWrite, substract, lowerBounds, upperBounds, doAverage, averageTotal, integrationTime
-        
-        
+        global averageSum,averageCount,writeContinu
+        averageSum = []
+        averageCount=0
         doFFT = self.checkFFT.isChecked()
         doAlwaysWrite = self.checkWrite.isChecked()
         substract = self.checkSub.isChecked()
@@ -219,6 +273,7 @@ class Window(QMainWindow, Ui_MainWindow):
         
         integrationTime = self.spinInt.value()
 
+        writeContinu = self.checkWrite.isChecked()
 
 
 
