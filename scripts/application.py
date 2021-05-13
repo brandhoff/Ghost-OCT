@@ -55,7 +55,7 @@ Hier sind debug sachen da ich kein sts spectrometer habe
 """
 
 def debug(i):
-    global averageSum, averageTotal, averageCount,writeContinu, substract
+    global averageSum, averageTotal, averageCount,writeContinu, substract,current_wave,current_int
     x = np.linspace(0, 2, 1000)
     y = np.sin(2 * np.pi * (x - 0.01 * i))
     current_int =y
