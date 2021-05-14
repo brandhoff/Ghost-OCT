@@ -30,11 +30,24 @@ ref_wav, ref_int = [1,2,3,4,5],[1,2,3,4,5]
 current_wave, current_int = [1,2,3,4.3,5],[1,2.2783,3,4,5]
 lowerBounds = 0
 upperBounds = 1000
+
+FFTlower = -10000
+FFTupper = 10000
+
+windowFunction = "Hamming"
+
 substract = False
 doFFT = True
 doWriteAlways = False
 
 writeContinu = False
+
+writeAllAv = False
+
+filePrefix = ""
+
+
+
 
 integrationTime = 10000
 averageTotal = 1
@@ -42,6 +55,10 @@ averageCount = 1
 doAverage = False
 
 averageSum = []
+
+
+
+
 
 #No unopened devices
 spec = sm.from_first_available()
@@ -146,7 +163,10 @@ def animate(i):
                     df = pd.DataFrame()
                     df.insert(0,"wavelength",wav)
                     df.insert(0,"intensity",its)
-                    df.to_csv("average_spectrum_"+str(datetime.now())+".speck")
+                    if filePrefix != "":
+                        df.to_csv(str(filePrefix)+"_average.speck")
+                    else:
+                        df.to_csv("average_spectrum_"+str(datetime.now())+".speck")
 
         else:
              return
@@ -156,11 +176,14 @@ def animate(i):
     axFFT.cla()
     if doFFT:
         k = 2*np.pi/wav
-        w=hamming(len(k))
+        if windowFunction == "Hamming":
+            w=hamming(len(k))
+        else:
+            w=blackman(len(k))
         transformed = ff.fft(w*its)
         x = ff.fftfreq(len(k),k[1]-k[0])
         axFFT.plot(x,np.abs(transformed))
-
+        axFFT.set_xlim(FFTlower, FFTupper)
 
 ani = matanimation.FuncAnimation(liveFig, animate, interval=10)
 
@@ -194,7 +217,15 @@ class Window(QMainWindow, Ui_MainWindow):
        self.spinAverage.valueChanged.connect(self.updateParams)
        self.spinInt.valueChanged.connect(self.updateParams)
        self.checkAverage.clicked.connect(self.updateParams)
+       
+       
+       self.spinFFTlower.valueChanged.connect(self.updateParams)
+       self.spinFFTupper.valueChanged.connect(self.updateParams)
+       self.comboWindow.currentTextChanged.connect(self.updateParams)
+       self.lineEdit.textChanged.connect(self.updateParams)
+       self.checkWriteAllAve.clicked.connect(self.updateParams)
 
+       
        
     """
     oeffnet einen file dialog und schaut ob eine datei ausgewaelt wurde,
@@ -238,7 +269,10 @@ class Window(QMainWindow, Ui_MainWindow):
         df = pd.DataFrame()
         df.insert(0,"wavelength",current_wave)
         df.insert(0,"intensity",current_int)
-        df.to_csv("spectrum_"+str(datetime.now())+".speck") #Diese endung beibehalten, ist eig nur eine csv aber muss
+        if filePrefix != "":
+            df.to_csv(str(filePrefix)+"_reference.speck")
+        else:
+            df.to_csv("spectrum_"+str(datetime.now())+".speck") #Diese endung beibehalten, ist eig nur eine csv aber muss
                                                             #ja keiner wissen 
 
 
@@ -253,7 +287,10 @@ class Window(QMainWindow, Ui_MainWindow):
         df = pd.DataFrame()
         df.insert(0,"wavelength",ref_wav)
         df.insert(0,"intensity",ref_int)
-        df.to_csv("reference"+str(datetime.now())+".speck")
+        if filePrefix != "":
+            df.to_csv(str(filePrefix)+".speck")
+        else:
+            df.to_csv("reference_"+str(datetime.now())+".speck")
         
         
         
@@ -265,6 +302,8 @@ class Window(QMainWindow, Ui_MainWindow):
         
         global doFFT, doAlwaysWrite, substract, lowerBounds, upperBounds, doAverage, averageTotal, integrationTime
         global averageSum,averageCount,writeContinu
+        global filePrefix, FFTlower, FFTupper, writeAllAv, windowFunction
+        
         averageSum = []
         averageCount=0
         doFFT = self.checkFFT.isChecked()
@@ -281,8 +320,13 @@ class Window(QMainWindow, Ui_MainWindow):
         integrationTime = self.spinInt.value()
 
         writeContinu = self.checkWrite.isChecked()
-
-
+        writeAllAv = self.checkWriteAllAve.isChecked()
+        filePrefix = self.lineEdit.text()
+        
+        FFTlower = self.spinFFTlower.value()
+        FFTupper = self.spinFFTupper.value()
+        
+        windowFunction = str(self.comboWindow.currentText())
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
