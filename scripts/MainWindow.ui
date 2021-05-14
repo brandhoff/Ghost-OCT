@@ -564,8 +564,14 @@ color: rgb(0, 0, 0);</string>
      </item>
      <item row="4" column="4">
       <widget class="QSpinBox" name="spinFFTlower">
+       <property name="minimum">
+        <number>-100000</number>
+       </property>
        <property name="maximum">
         <number>100000</number>
+       </property>
+       <property name="value">
+        <number>-10000</number>
        </property>
       </widget>
      </item>
