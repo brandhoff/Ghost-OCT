@@ -22,7 +22,7 @@ from seabreeze.spectrometers import Spectrometer as sm
 import matplotlib.animation as matanimation
 from itertools import count
 import scipy.fftpack as ff
-from scipy.signal import blackman
+from scipy.signal import blackman, hamming
 
 
 
@@ -44,7 +44,7 @@ doAverage = False
 averageSum = []
 
 #No unopened devices
-spec = ""#sm.from_first_available()
+spec = sm.from_first_available()
 
 liveFig, (axSpec, axFFT) = plt.subplots(2,1)
 
@@ -86,7 +86,7 @@ def debug(i):
         else:
              return
     
-    line.set_data(x, y)
+    #line.set_data(x, y)
     axFFT.cla()
     if doFFT:
         k = x
@@ -97,11 +97,11 @@ def debug(i):
         axFFT.set_xlim(0,4)
 
 
-
+"""
 line, = axSpec.plot([], [], lw=2)
 axSpec.set_xlim(0,2)
 axSpec.set_ylim(-2,2)
-ani = matanimation.FuncAnimation(liveFig, debug, interval=10)
+"""
 
 
 def animate(i):
@@ -109,7 +109,8 @@ def animate(i):
     global liveFig, axSpec, axFFT
     global averageSum, averageTotal, averageCount,writeContinu
     
-    plt.cla()
+    
+    
     spec.integration_time_micros(integrationTime)
     current_wave = spec.wavelengths()
     current_int = spec.intensities()
@@ -149,17 +150,19 @@ def animate(i):
 
         else:
              return
+    axSpec.cla()
     axSpec.plot(wav,its)
 
-
+    axFFT.cla()
     if doFFT:
         k = 2*np.pi/wav
-        w=blackman(len(k))
+        w=hamming(len(k))
         transformed = ff.fft(w*its)
         x = ff.fftfreq(len(k),k[1]-k[0])
         axFFT.plot(x,np.abs(transformed))
 
 
+ani = matanimation.FuncAnimation(liveFig, animate, interval=10)
 
 
 
@@ -180,6 +183,7 @@ class Window(QMainWindow, Ui_MainWindow):
        self.btnStop.clicked.connect(self.stopSampling)
        self.btnShowRef.clicked.connect(self.showRef)
        self.btnSaveSpec.clicked.connect(self.saveSpec)
+       self.btnTakeRef.clicked.connect(self.takeRef)
        
        self.checkSub.clicked.connect(self.updateParams)
        self.checkFFT.clicked.connect(self.updateParams)
