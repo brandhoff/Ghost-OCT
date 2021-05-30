@@ -3,7 +3,7 @@
 """
 Created on Wed May 12 18:09:21 2021
 
-@author: jonas
+@author: Jonas Brandhoff
 """
 import sys
 
@@ -23,8 +23,8 @@ import matplotlib.animation as matanimation
 from itertools import count
 import scipy.fftpack as ff
 from scipy.signal import blackman, hamming
-
-
+import nfft
+import scipy.interpolate as interp
 
 ref_wav, ref_int = [1,2,3,4,5],[1,2,3,4,5]
 current_wave, current_int = [1,2,3,4.3,5],[1,2.2783,3,4,5]
@@ -54,6 +54,12 @@ averageTotal = 1
 averageCount = 1
 doAverage = False
 
+
+doOffset = False
+linOffset = 0
+
+doFFTRemoveAv = False
+
 averageSum = []
 
 
@@ -67,77 +73,39 @@ liveFig, (axSpec, axFFT) = plt.subplots(2,1)
 
 
 
-"""
-Hier sind debug sachen da ich kein sts spectrometer habe
-"""
 
-def debug(i):
-    global averageSum, averageTotal, averageCount,writeContinu, substract,current_wave,current_int
-    x = np.linspace(0, 2, 1000)
-    y = np.sin(2 * np.pi * (x - 0.01 * i))
-    current_int =y
-    current_wave = x
-    if substract:
-        if len(ref_int) == len(y):
-            y = y-ref_int
-    
-    if doAverage:
-        if len(averageSum) != len(y):
-            averageSum = y
-            averageCount = averageCount+1
-        else:
-          averageSum = averageSum + y
-          averageCount = averageCount+1
-          
-        if averageCount == averageTotal:
-             its = averageSum/averageTotal
-             averageSum = []
-             averageCount=0
-             if writeContinu:
-                    df = pd.DataFrame()
-                    df.insert(0,"wavelength",x)
-                    df.insert(0,"intensity",y)
-                    df.to_csv("average_spectrum_"+str(datetime.now())+".speck")
-             
-
-        else:
-             return
-    
-    #line.set_data(x, y)
-    axFFT.cla()
-    if doFFT:
-        k = x
-        w=blackman(len(k))
-        transformed = ff.fft(w*y)
-        x = ff.fftfreq(len(k),k[1]-k[0])
-        axFFT.plot(x,np.abs(transformed))
-        axFFT.set_xlim(0,4)
+   
 
 
-"""
-line, = axSpec.plot([], [], lw=2)
-axSpec.set_xlim(0,2)
-axSpec.set_ylim(-2,2)
-"""
 
 
-def animate(i):
+
+def animate(i): #hauptfunktion mit i als refresh rate bzw. current frame, wird mit jedem refresh neu gecallt
     global spec,integrationTime, current_wave, current_int,ref_wav, ref_int, substract,doFFT
     global liveFig, axSpec, axFFT
-    global averageSum, averageTotal, averageCount,writeContinu
+    global averageSum, averageTotal, averageCount,writeContinu,linOffset,doOffset,doFFTRemoveAv
     
     
     
-    spec.integration_time_micros(integrationTime)
-    current_wave = spec.wavelengths()
+    spec.integration_time_micros(integrationTime) #setzt die integrations time. bis jetzt ist der default sinnvoll
+    current_wave = spec.wavelengths() #auslesen der spec werte
     current_int = spec.intensities()
+    
+    if doOffset:
+        current_int = current_int - linOffset#wenn ein offset gemacht werden soll wird der hier gesetzt
+    
     
     if substract:
         if len(current_int) == len(ref_int):
-            current_int = current_int - ref_int
+            current_int = np.divide(current_int, ref_int, out=np.zeros_like(current_int), where=ref_int!=0) 
+            #der befehl umgeht das true divide problem, indem er nur elemente beruecksichtigt, die in der ref nicht 0 sind. 
+            #momentan wird anstatt inf einfach 0 gegeben. alternativ waere Nan
     
-    wavelengths_cut = []
+    wavelengths_cut = [] #bereitet gecuttete arrays vor 
     intensity_cut = []
+    #WICHTIG!#
+    #Das cuttet tatsaechliche werte, damit wird spaeter die fft nur mit den gecutteten werten durchgefuerht dadurch
+    #werden oberschwingungen um die null verhindert. 
     for idx, wv in enumerate(current_wave):
         if wv > lowerBounds and wv < upperBounds:
             wavelengths_cut.append(current_wave[idx])
@@ -146,18 +114,18 @@ def animate(i):
     wav = np.asarray(wavelengths_cut)
     its = np.asarray(intensity_cut)
 
-    if doAverage:
-        if len(averageSum) != len(its):
+    if doAverage: #wenn ein average gebildet werden soll werden alle aufaddiert und dann durch die zahl geteilt
+        if len(averageSum) != len(its): # wenn die laengen nicht stimmen ist das das erste element mit falscher laenge
             averageSum = its
             averageCount = averageCount+1
         else:
-          averageSum = averageSum + its
+          averageSum = averageSum + its #einfach aufsummieren
           averageCount = averageCount+1
           
-        if averageCount == averageTotal:
-             its = averageSum/averageTotal
+        if averageCount == averageTotal: #der average wurde erreicht
+             its = averageSum/averageTotal #neue avrg its ist also nun summer / anzahl
              averageSum = []
-             averageCount=0
+             averageCount=0 #von vorne beginnen
              #Falls filewriting an ist sollen diese auch geschrieben werden
              if writeContinu:
                     df = pd.DataFrame()
@@ -171,21 +139,38 @@ def animate(i):
         else:
              return
     axSpec.cla()
-    axSpec.plot(wav,its)
+    axSpec.plot(wav,its) #plottet das spektrum egal um nun averg oder normal
 
     axFFT.cla()
-    if doFFT:
-        k = 2*np.pi/wav
+    if doFFT: #fft beginnt hier
+        k = 2*np.pi/wav #nicht aqd achse von Ks 
+        start = wav[-1]
+        ende = wav[0]
+        k2 = np.linspace(2*np.pi/start, 2*np.pi/ende, len(wav)) #raender beibehalten aber nun aqd gespaced
+        
         if windowFunction == "Hamming":
-            w=hamming(len(k))
+            w=hamming(len(k2))
         else:
-            w=blackman(len(k))
-        transformed = ff.fft(w*its)
-        x = ff.fftfreq(len(k),k[1]-k[0])
-        axFFT.plot(x,np.abs(transformed))
-        axFFT.set_xlim(FFTlower, FFTupper)
+            w=blackman(len(k2))
+        
+        if doFFTRemoveAv:
+            its = its-np.mean(its)
+        
+        
+        #k2 entspricht der neuen aqd Achse, nun muessen die wave werte zu der neuen achse interpoliert werden:
+            
+        f = interp.interp1d(k, its) #interpoliert die bereiche zwischen den Ks und der Intensity
+        
+        its_aq = f(k2) #mapped die interpolierten werte auf aqud. K2
+        
+        transformed = ff.fft(w*its_aq) #fuehrt die FFT durch jetzt mit aqud. intensities und gefaltet mit dem fenster
+        x = ff.fftfreq(len(k2),k2[1]-k2[0]) #transformiert k2 zu real raum werten
+        
+      
+        axFFT.plot(x,np.abs(transformed)) #plotten
+        axFFT.set_xlim(FFTlower, FFTupper) #setzt die vom userfestgelget range 
 
-ani = matanimation.FuncAnimation(liveFig, animate, interval=10)
+ani = matanimation.FuncAnimation(liveFig, animate, interval=10) #aufrufen der hauptfunktion
 
 
 
@@ -225,7 +210,9 @@ class Window(QMainWindow, Ui_MainWindow):
        self.lineEdit.textChanged.connect(self.updateParams)
        self.checkWriteAllAve.clicked.connect(self.updateParams)
 
-       
+       self.spinOffset.valueChanged.connect(self.updateParams)
+       self.checkOffset.clicked.connect(self.updateParams)
+       self.checkFFTAv.clicked.connect(self.updateParams)
        
     """
     oeffnet einen file dialog und schaut ob eine datei ausgewaelt wurde,
@@ -270,7 +257,7 @@ class Window(QMainWindow, Ui_MainWindow):
         df.insert(0,"wavelength",current_wave)
         df.insert(0,"intensity",current_int)
         if filePrefix != "":
-            df.to_csv(str(filePrefix)+"_reference.speck")
+            df.to_csv(str(filePrefix)+".speck")
         else:
             df.to_csv("spectrum_"+str(datetime.now())+".speck") #Diese endung beibehalten, ist eig nur eine csv aber muss
                                                             #ja keiner wissen 
@@ -283,7 +270,8 @@ class Window(QMainWindow, Ui_MainWindow):
         spec.integration_time_micros(integrationTime)
         ref_wav = spec.wavelengths()
         ref_int = spec.intensities()
-        
+        if doOffset:
+            ref_int = ref_int - linOffset
         df = pd.DataFrame()
         df.insert(0,"wavelength",ref_wav)
         df.insert(0,"intensity",ref_int)
@@ -293,7 +281,11 @@ class Window(QMainWindow, Ui_MainWindow):
             df.to_csv("reference_"+str(datetime.now())+".speck")
         
         
+    
         
+    
+    
+    
     """
     Falls an den parameteren geschraubt wird soll das aktualisiert werden
     """
@@ -302,7 +294,7 @@ class Window(QMainWindow, Ui_MainWindow):
         
         global doFFT, doAlwaysWrite, substract, lowerBounds, upperBounds, doAverage, averageTotal, integrationTime
         global averageSum,averageCount,writeContinu
-        global filePrefix, FFTlower, FFTupper, writeAllAv, windowFunction
+        global filePrefix, FFTlower, FFTupper, writeAllAv, windowFunction, doOffset, linOffset, doFFTRemoveAv
         
         averageSum = []
         averageCount=0
@@ -326,6 +318,10 @@ class Window(QMainWindow, Ui_MainWindow):
         FFTlower = self.spinFFTlower.value()
         FFTupper = self.spinFFTupper.value()
         
+        doOffset = self.checkOffset.isChecked()
+        linOffset = self.spinOffset.value()
+        
+        doFFTRemoveAv = self.checkFFTAv.isChecked()
         windowFunction = str(self.comboWindow.currentText())
 
 if __name__ == "__main__":
