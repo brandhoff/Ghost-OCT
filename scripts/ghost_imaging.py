@@ -20,7 +20,9 @@ import matplotlib.pyplot as plt
 
 def illumination_pattern(type="random",numer_of_peaks=8):
 	#function that returns the input wavelengths for the laser
-	wavelengths = np.zeros(number_of_peaks)
+	wavelengths = np.zeros(number_of_peaks)#hier sollten wir eventuell = [] nehmen und jeden peak mit intensity appenden
+	#dann hat der array die form [[peak1Wav,peak1Int], [peak2Wav,peak2Int], ...] damit laufen wir auch nicht gefahr am ende 
+	#eine "tote" wellenlaenge zu haben, die div 0 verursacht
 	#choose everyone of the input wavelengths randomly in the desired interval
 	return wavelengths
 
