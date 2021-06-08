@@ -37,9 +37,11 @@ step_number = 1000
 #großer loop über die einzelnen schritte
 for i in range(step_number):
 
-	#wähle eingangs-spektrum, steuere laser an
+	#get input wavelengths patter
 	wavelengths = illumination_pattern()
-	#lese referenz-spektrum aus
+	#set laser to input wavelengths
+	set_wavelengths(wavelengths)
+	#lread reference spectrum out, to control if input wavelengths = output wavelengths of laser
 	reference_spectrum = read_out_spectrometer()
 	#lese objekt-intensität mit kamera aus
 	object_intensity = read_out_camera()
