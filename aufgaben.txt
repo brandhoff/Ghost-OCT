@@ -1,0 +1,14 @@
+charakterisierung des OCT-aufbaus
+	auflösung, kontrast, bandbreite, maximale tiefenauflösung, abfall der intensität der maxima
+zero-padding
+verschiedene interpolations-funktion
+
+Ghost-OCT:
+	benötigen prinizipiell nur Modul was uns Spektrum gibt, den restlichen Code für FT etc. können
+	wir dann direkt weiterverwenden
+
+	müssen Laser ansteuern um wellenlängen durchzufahren
+	ideen für verschiedene muster:
+		random
+	müssen mit spektrometer die referenz auslesen, da wir programm "nicht vertrauen"
+	müssen kamera auslesen
