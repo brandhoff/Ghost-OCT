@@ -59,10 +59,13 @@ doOffset = False
 linOffset = 0
 
 doFFTRemoveAv = False
+doZeroPad = False
+
 
 averageSum = []
 
-
+current_fft_X = [] #um direkt die FFT speicher zu koennen
+current_fft_Y= []
 
 
 
@@ -82,8 +85,8 @@ liveFig, (axSpec, axFFT) = plt.subplots(2,1)
 
 def animate(i): #hauptfunktion mit i als refresh rate bzw. current frame, wird mit jedem refresh neu gecallt
     global spec,integrationTime, current_wave, current_int,ref_wav, ref_int, substract,doFFT
-    global liveFig, axSpec, axFFT
-    global averageSum, averageTotal, averageCount,writeContinu,linOffset,doOffset,doFFTRemoveAv
+    global liveFig, axSpec, axFFT,doZeroPad
+    global averageSum, averageTotal, averageCount,writeContinu,linOffset,doOffset,doFFTRemoveAv, current_fft_X, current_fft_Y
     
     
     
@@ -146,8 +149,12 @@ def animate(i): #hauptfunktion mit i als refresh rate bzw. current frame, wird m
         k = 2*np.pi/wav #nicht aqd achse von Ks 
         start = wav[-1]
         ende = wav[0]
-        k2 = np.linspace(2*np.pi/start, 2*np.pi/ende, len(wav)) #raender beibehalten aber nun aqd gespaced
-        
+        k2_helper = np.linspace(2*np.pi/start, 2*np.pi/ende, len(wav)) #raender beibehalten aber nun aqd gespaced
+        k2 = k2_helper
+      
+           
+           
+           
         if windowFunction == "Hamming":
             w=hamming(len(k2))
         else:
@@ -162,14 +169,25 @@ def animate(i): #hauptfunktion mit i als refresh rate bzw. current frame, wird m
         f = interp.interp1d(k, its) #interpoliert die bereiche zwischen den Ks und der Intensity
         
         its_aq = f(k2) #mapped die interpolierten werte auf aqud. K2
-        
-        transformed = ff.fft(w*its_aq) #fuehrt die FFT durch jetzt mit aqud. intensities und gefaltet mit dem fenster
-        x = ff.fftfreq(len(k2),k2[1]-k2[0]) #transformiert k2 zu real raum werten
-        
-      
-        axFFT.plot(x,np.abs(transformed)) #plotten
-        axFFT.set_xlim(FFTlower, FFTupper) #setzt die vom userfestgelget range 
+        fenster_int = w*its_aq
+          
+           
+        if doZeroPad:
+           distant_k = k2_helper[1]-k2_helper[0]
+           k2 = np.linspace(k2_helper[0] - len(k2_helper)*distant_k, k2_helper[-1] + len(k2_helper)*distant_k, 3*len(wav)) 
+       
+           fenster_int= np.pad(fenster_int, (len(fenster_int),  len(fenster_int)), 'constant')
 
+        
+        transformed = ff.fft(fenster_int) #fuehrt die FFT durch jetzt mit aqud. intensities und gefaltet mit dem fenster
+        x = ff.fftfreq(len(k2),k2[1]-k2[0]) #transformiert k2 zu real raum werten
+        x *= np.pi
+      
+        axFFT.plot(x,np.abs(transformed)) #plotten, hier mit x/2, da der optische weg sich verdoppelt, wenn ein spiegel verfahren wird
+        #ich haette das lieber im postprocessing aber paul wollte das zum debuggen
+        axFFT.set_xlim(FFTlower, FFTupper) #setzt die vom userfestgelget range 
+        current_fft_X = x
+        current_fft_Y = np.abs(transformed)
 ani = matanimation.FuncAnimation(liveFig, animate, interval=10) #aufrufen der hauptfunktion
 
 
@@ -179,7 +197,7 @@ class Window(QMainWindow, Ui_MainWindow):
         super().__init__(parent)
         self.setupUi(self)
         self.connectSignalsSlots()
-
+        
 
     """
     HIER WERDEN DIE EINZELNEN SIGNALS MIT DEN SLOTS VERBUNDEN
@@ -212,8 +230,29 @@ class Window(QMainWindow, Ui_MainWindow):
 
        self.spinOffset.valueChanged.connect(self.updateParams)
        self.checkOffset.clicked.connect(self.updateParams)
+       self.checkZeroPad.clicked.connect(self.updateParams)
+
        self.checkFFTAv.clicked.connect(self.updateParams)
+       self.btnSaveFFT.clicked.connect(self.takeFFT)
+       self.btnExit.clicked.connect(self.close)
+    
        
+    
+    def close(self):
+        spec.close()
+        exit()
+
+    def takeFFT(self):
+        global current_fft_X, current_fft_Y
+        if current_fft_X != [] and current_fft_Y != []:
+            df = pd.DataFrame()
+            df.insert(0,"x",current_fft_X)
+            df.insert(0,"intensity",current_fft_Y)
+            if filePrefix != "":
+                df.to_csv(str(filePrefix)+"_FFT.speck")
+            else:
+                df.to_csv("FFT_"+str(datetime.now())+".speck") #Diese endung beibehalten, ist eig nur eine csv aber muss
+                                                                #ja keiner wissen 
     """
     oeffnet einen file dialog und schaut ob eine datei ausgewaelt wurde,
     dann wird das spektrum als ref geoeffnet
@@ -281,7 +320,10 @@ class Window(QMainWindow, Ui_MainWindow):
             df.to_csv("reference_"+str(datetime.now())+".speck")
         
         
-    
+    def exitOut(self):
+        global spec
+        spec.close()
+        exit()
         
     
     
@@ -295,6 +337,7 @@ class Window(QMainWindow, Ui_MainWindow):
         global doFFT, doAlwaysWrite, substract, lowerBounds, upperBounds, doAverage, averageTotal, integrationTime
         global averageSum,averageCount,writeContinu
         global filePrefix, FFTlower, FFTupper, writeAllAv, windowFunction, doOffset, linOffset, doFFTRemoveAv
+        global doZeroPad
         
         averageSum = []
         averageCount=0
@@ -320,7 +363,8 @@ class Window(QMainWindow, Ui_MainWindow):
         
         doOffset = self.checkOffset.isChecked()
         linOffset = self.spinOffset.value()
-        
+        doZeroPad = self.checkZeroPad.isChecked()
+
         doFFTRemoveAv = self.checkFFTAv.isChecked()
         windowFunction = str(self.comboWindow.currentText())
 

@@ -20,7 +20,7 @@
       <x>50</x>
       <y>80</y>
       <width>735</width>
-      <height>330</height>
+      <height>337</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
@@ -512,53 +512,6 @@ color: rgb(0, 0, 0);</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="4">
-      <widget class="QComboBox" name="comboWindow">
-       <item>
-        <property name="text">
-         <string>Blackman</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Hamming</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="7" column="4">
-      <widget class="QCheckBox" name="checkFFT">
-       <property name="text">
-        <string>Show Fouriertransform</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="4">
-      <widget class="QSpinBox" name="spinFFTupper">
-       <property name="maximum">
-        <number>100000</number>
-       </property>
-       <property name="value">
-        <number>10000</number>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="4">
-      <widget class="QSpinBox" name="spinFFTlower">
-       <property name="minimum">
-        <number>-100000</number>
-       </property>
-       <property name="maximum">
-        <number>100000</number>
-       </property>
-       <property name="value">
-        <number>-10000</number>
-       </property>
-      </widget>
-     </item>
      <item row="7" column="2">
       <widget class="QCheckBox" name="checkWriteAllAve">
        <property name="text">
@@ -583,17 +536,78 @@ color: rgb(0, 0, 0);</string>
        </property>
       </widget>
      </item>
-     <item row="8" column="4">
+     <item row="10" column="4">
+      <widget class="QPushButton" name="btnSaveFFT">
+       <property name="text">
+        <string>save FFT</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="4">
+      <widget class="QSpinBox" name="spinFFTupper">
+       <property name="maximum">
+        <number>100000</number>
+       </property>
+       <property name="value">
+        <number>10000</number>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="4">
+      <widget class="QSpinBox" name="spinFFTlower">
+       <property name="minimum">
+        <number>-100000</number>
+       </property>
+       <property name="maximum">
+        <number>100000</number>
+       </property>
+       <property name="value">
+        <number>-10000</number>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="4">
+      <widget class="QComboBox" name="comboWindow">
+       <item>
+        <property name="text">
+         <string>Blackman</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Hamming</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="5" column="4">
+      <widget class="QCheckBox" name="checkFFT">
+       <property name="text">
+        <string>Show Fouriertransform</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="4">
       <widget class="QCheckBox" name="checkFFTAv">
        <property name="text">
         <string>Remove Average b4 FFT</string>
        </property>
       </widget>
      </item>
-     <item row="10" column="4">
-      <widget class="QPushButton" name="btnSaveFFT">
+     <item row="8" column="4">
+      <widget class="QCheckBox" name="checkZeroPad">
        <property name="text">
-        <string>save FFT</string>
+        <string>Zero Padding</string>
+       </property>
+      </widget>
+     </item>
+     <item row="12" column="4">
+      <widget class="QPushButton" name="btnExit">
+       <property name="text">
+        <string>EXIT</string>
        </property>
       </widget>
      </item>
