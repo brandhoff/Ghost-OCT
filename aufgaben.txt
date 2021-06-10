@@ -1,8 +1,9 @@
 charakterisierung des OCT-aufbaus
 	auflösung, kontrast, bandbreite, maximale tiefenauflösung, abfall der intensität der maxima
-zero-padding
+zero-padding, grob check
 verschiedene interpolations-funktion
-probenhalter bauen
+probenhalter bauen, wird gemacht mit 3d-drucker
+filewriter programmieren mit header für messparameter, zero-padding etc.
 
 Ghost-OCT:
 	benötigen prinizipiell nur Modul was uns Spektrum gibt, den restlichen Code für FT etc. können
