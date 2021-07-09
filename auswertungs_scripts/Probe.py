@@ -19,7 +19,7 @@ import matplotlib.pylab as pl
 from matplotlib.colors import ListedColormap
 import matplotlib as mpl
 from collections import OrderedDict
-
+mpl.rcParams.update({'font.size': 22})
 """
 ---Maincolors---
 cadetblue
@@ -34,7 +34,7 @@ mediumvioletred
 
 
 
-colors = ['cadetblue','yellowgreen'
+colors = ['darkblue','darkgreen'
 ,
 'darkgoldenrod',
 
@@ -47,16 +47,12 @@ annot_colors = ['red',
 
 datas = []
 
-file2 = '/Users/jonas/OCT/scripts/gold_plaettchen/20nmgold_plaettchen_pos2_10ym.speck'
-filePRefix = r"/Users/jonas/OCT/scripts/platte_unbeschichtet/"
+filePRefix = r"D:\uni\PPraktikum\OCT\scripts\messwerte\platte_unbeschichtet//"
 maxima = []
 data_spek = filePRefix+ r'plaettchen_unbeschichtet_1.speck'
 
-#
-dataImp = pd.read_csv(data_spek, sep=',')
-dataImp.plot( x='wavelength', y= 'intensity',c = 'red')
-dataImp = pd.read_csv(file2, sep=',')
-dataImp.plot( x='wavelength', y= 'intensity',c = 'red')
+
+
 for i in range(1,4):
     data = pd.read_csv(filePRefix+"plaettchen_unbeschichtet_"+ str(i)+"_FFT.speck", sep=',')
     data['x'] = data['x'] / 1000
@@ -84,12 +80,12 @@ axes[2].tick_params(
     right=False,        
     labelleft=False)
 
-axes[0].spines['right'].set_visible(False)
+axes[0].spines['right'].set_visible(True)
 
-axes[1].spines['left'].set_visible(False)
-axes[1].spines['right'].set_visible(False)
+axes[1].spines['left'].set_visible(True)
+axes[1].spines['right'].set_visible(True)
 
-axes[2].spines['left'].set_visible(False)
+axes[2].spines['left'].set_visible(True)
 
 axes[0].tick_params(axis="y",direction="in", pad=-22)
 
@@ -116,9 +112,9 @@ legend_ax2 = [Line2D([0], [0], color='none', lw=2, label='Mirror at '),
 
 
 
-axes[0].legend(handles=legend_ax0,fontsize = 12,loc=(0.25,0.9)) 
-axes[1].legend(handles=legend_ax1,fontsize = 12,loc=(0.25,0.9)) 
-axes[2].legend(handles=legend_ax2,fontsize = 12,loc=(0.25,0.9)) 
+axes[0].legend(handles=legend_ax0,fontsize = 24,loc=(0.25,0.8)) 
+axes[1].legend(handles=legend_ax1,fontsize = 24,loc=(0.25,0.8)) 
+axes[2].legend(handles=legend_ax2,fontsize = 24,loc=(0.25,0.8)) 
 
 
 #axes[2].legend(handles=legend_elements,fontsize = 12,loc=(0.33,0.775)) 
@@ -142,26 +138,26 @@ bbox_props = dict(boxstyle="circle",pad=0.1,fc=(0.8,0.9,0.9,0),  ec="red", lw=1)
 
 linewidths = 14
 
-axes[0].axvline(21.5, linewidth=linewidths, color=colors[0], alpha=0.1)
+axes[0].axvline(21.5, linewidth=linewidths, color=annot_colors[2], alpha=0.3)
 
-axes[1].axvline(106.5, linewidth=linewidths, color=colors[1], alpha=0.1)
-axes[1].axvline(45.1, linewidth=linewidths, color=annot_colors[1], alpha=0.1)
-
-
-axes[2].axvline(127.8, linewidth=linewidths, color=colors[2], alpha=0.1)
-axes[2].axvline(25.1, linewidth=linewidths, color=annot_colors[1], alpha=0.1)
+axes[1].axvline(106.5, linewidth=linewidths, color=annot_colors[2], alpha=0.3)
+axes[1].axvline(45.1, linewidth=linewidths, color=annot_colors[1], alpha=0.3)
 
 
-axes[0].axvline(152, linewidth=linewidths, color=annot_colors[0], alpha=0.1)
-axes[1].axvline(152, linewidth=linewidths, color=annot_colors[0], alpha=0.1)
-axes[2].axvline(152, linewidth=linewidths, color=annot_colors[0], alpha=0.1)
+axes[2].axvline(127.8, linewidth=linewidths, color=annot_colors[2], alpha=0.3)
+axes[2].axvline(25.1, linewidth=linewidths, color=annot_colors[1], alpha=0.3)
 
 
-axes[1].text(43.1,120,'Peak at', color = annot_colors[1], fontsize=12)
-axes[1].text(43.1,115,'$x= 45.0\mu m$', color = annot_colors[1], fontsize=12)
+axes[0].axvline(152, linewidth=linewidths, color=annot_colors[0], alpha=0.3)
+axes[1].axvline(152, linewidth=linewidths, color=annot_colors[0], alpha=0.3)
+axes[2].axvline(152, linewidth=linewidths, color=annot_colors[0], alpha=0.3)
 
-axes[2].text(23.1,120,'Peak at', color = annot_colors[1], fontsize=12)
-axes[2].text(23.1,115,'$x= 25.0\mu m$', color = annot_colors[1], fontsize=12)
+
+#axes[1].text(43.1,120,'Peak at', color = annot_colors[1], fontsize=24)
+#axes[1].text(43.1,115,'$x= 45.0\mu m$', color = annot_colors[1], fontsize=24)
+
+#axes[2].text(23.1,120,'Peak at', color = annot_colors[1], fontsize=24)
+#axes[2].text(23.1,115,'$x= 25.0\mu m$', color = annot_colors[1], fontsize=24)
 
 
 
@@ -180,14 +176,14 @@ for i,data in enumerate(datas):
 
 for i,data in enumerate(cuts):
     
-    data.plot.scatter(ax = axes[i], s=5, x='x', y= 'intensity',c = colors[i])
+    data.plot(ax = axes[i],  x='x', y= 'intensity',c = colors[i])
 
 
-axes[0].set_ylabel('Intensity in a.u.',fontsize=12)
+axes[0].set_ylabel('Intensity in a.u.',fontsize=24)
 
 axes[0].tick_params(labelleft=False)
 axes[0].set_xlabel('')
-axes[1].set_xlabel('X relative to equal mirror distances in $\mu m$',fontsize=12)
+axes[1].set_xlabel('X relative to equal mirror distances in $\mu m$',fontsize=24)
 
 axes[-1].set_xlabel('')
 plt.savefig("unbeschichetPlot.pdf");
